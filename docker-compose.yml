@@ -85,6 +85,116 @@ services:
       retries: 5
       start_period: 30s
 
+  # ── Prometheus ────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: camwater_prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./docker/prometheus/alerts:/etc/prometheus/alerts:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    networks:
+      - camwater_network
+    depends_on:
+      - node_exporter
+      - nginx_exporter
+      - mysql_exporter
+      - mongodb_exporter
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Grafana ────────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: camwater_grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-camwater_grafana}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    volumes:
+      - ./docker/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    networks:
+      - camwater_network
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Node Exporter (métriques système) ─────────────────────────────────────
+  node_exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: camwater_node_exporter
+    restart: unless-stopped
+    command:
+      - '--path.rootfs=/host'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($|/)'
+    volumes:
+      - /:/host:ro,rslave
+    networks:
+      - camwater_network
+    pid: host
+
+  # ── Nginx Exporter (métriques Nginx) ──────────────────────────────────────
+  nginx_exporter:
+    image: nginx/nginx-prometheus-exporter:1.1.0
+    container_name: camwater_nginx_exporter
+    restart: unless-stopped
+    command:
+      - '--nginx.scrape-uri=http://app/nginx_status'
+    networks:
+      - camwater_network
+    depends_on:
+      - app
+
+  # ── MySQL Exporter ─────────────────────────────────────────────────────────
+  mysql_exporter:
+    image: prom/mysqld-exporter:v0.15.1
+    container_name: camwater_mysql_exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "root:${DB_ROOT_PASSWORD:-rootsecret}@(db:3306)/"
+    networks:
+      - camwater_network
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ── MongoDB Exporter ───────────────────────────────────────────────────────
+  mongodb_exporter:
+    image: percona/mongodb_exporter:0.40
+    container_name: camwater_mongodb_exporter
+    restart: unless-stopped
+    command:
+      - '--mongodb.uri=mongodb://mongo:27017'
+      - '--collect-all'
+    networks:
+      - camwater_network
+    depends_on:
+      mongo:
+        condition: service_healthy
+
 # ── Volumes ────────────────────────────────────────────────────────────────
 volumes:
   db_data:
@@ -92,6 +202,10 @@ volumes:
   mongo_data:
     driver: local
   app_storage:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
     driver: local
 
 # ── Réseau ─────────────────────────────────────────────────────────────────

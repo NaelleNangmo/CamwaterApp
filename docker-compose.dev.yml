@@ -80,9 +80,109 @@ services:
       retries: 5
       start_period: 30s
 
+  # ── Prometheus (dev) ──────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: camwater_prometheus_dev
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./docker/prometheus/alerts:/etc/prometheus/alerts:ro
+      - prometheus_dev_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - camwater_network
+    depends_on:
+      - node_exporter
+      - nginx_exporter
+      - mysql_exporter
+      - mongodb_exporter
+
+  # ── Grafana (dev) ──────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: camwater_grafana_dev
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    volumes:
+      - ./docker/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_dev_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - camwater_network
+    depends_on:
+      - prometheus
+
+  # ── Node Exporter (dev) ────────────────────────────────────────────────────
+  node_exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: camwater_node_exporter_dev
+    restart: unless-stopped
+    command:
+      - '--path.rootfs=/host'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /:/host:ro,rslave
+    networks:
+      - camwater_network
+    pid: host
+
+  # ── Nginx Exporter (dev) ───────────────────────────────────────────────────
+  nginx_exporter:
+    image: nginx/nginx-prometheus-exporter:1.1.0
+    container_name: camwater_nginx_exporter_dev
+    restart: unless-stopped
+    command:
+      - '--nginx.scrape-uri=http://app/nginx_status'
+    networks:
+      - camwater_network
+    depends_on:
+      - app
+
+  # ── MySQL Exporter (dev) ───────────────────────────────────────────────────
+  mysql_exporter:
+    image: prom/mysqld-exporter:v0.15.1
+    container_name: camwater_mysql_exporter_dev
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "root:rootsecret@(db:3306)/"
+    networks:
+      - camwater_network
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ── MongoDB Exporter (dev) ─────────────────────────────────────────────────
+  mongodb_exporter:
+    image: percona/mongodb_exporter:0.40
+    container_name: camwater_mongodb_exporter_dev
+    restart: unless-stopped
+    command:
+      - '--mongodb.uri=mongodb://mongo:27017'
+      - '--collect-all'
+    networks:
+      - camwater_network
+    depends_on:
+      mongo:
+        condition: service_healthy
+
 volumes:
   db_dev_data:
   mongo_dev_data:
+  prometheus_dev_data:
+  grafana_dev_data:
 
 networks:
   camwater_network:

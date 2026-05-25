@@ -1,0 +1,647 @@
+{
+  "id": null,
+  "uid": "camwater-overview",
+  "title": "CamwaterApp — Vue d'ensemble",
+  "tags": ["camwater", "overview"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Système",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+
+    {
+      "id": 2,
+      "type": "gauge",
+      "title": "CPU Usage (%)",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 1 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 60 },
+              { "color": "red", "value": 80 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+          "legendFormat": "CPU",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+
+    {
+      "id": 3,
+      "type": "gauge",
+      "title": "Mémoire utilisée (%)",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 1 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "red", "value": 85 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+          "legendFormat": "RAM",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+
+    {
+      "id": 4,
+      "type": "gauge",
+      "title": "Disque utilisé (%)",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 1 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "red", "value": 85 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "(1 - (node_filesystem_avail_bytes{mountpoint=\"/\",fstype!=\"tmpfs\"} / node_filesystem_size_bytes{mountpoint=\"/\",fstype!=\"tmpfs\"})) * 100",
+          "legendFormat": "Disque /",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Uptime système",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 1 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "node_time_seconds - node_boot_time_seconds",
+          "legendFormat": "Uptime",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Nginx",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 7 },
+      "collapsed": false
+    },
+
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "Nginx — Statut",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 8 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "nginx_up",
+          "legendFormat": "Nginx",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+
+    {
+      "id": 12,
+      "type": "stat",
+      "title": "Connexions actives",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 8 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 100 }, { "color": "red", "value": 500 }]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "nginx_connections_active",
+          "legendFormat": "Actives",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Requêtes Nginx / seconde",
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 8 },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(nginx_http_requests_total[5m])",
+          "legendFormat": "Requêtes/s",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+
+    {
+      "id": 14,
+      "type": "stat",
+      "title": "Connexions en attente",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 12 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 50 }]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "nginx_connections_waiting",
+          "legendFormat": "En attente",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+
+    {
+      "id": 15,
+      "type": "stat",
+      "title": "Connexions acceptées/s",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 12 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(nginx_connections_accepted_total[5m])",
+          "legendFormat": "Acceptées/s",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+
+    {
+      "id": 20,
+      "type": "row",
+      "title": "MySQL",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 16 },
+      "collapsed": false
+    },
+
+    {
+      "id": 21,
+      "type": "stat",
+      "title": "MySQL — Statut",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 17 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "mysql_up",
+          "legendFormat": "MySQL",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+
+    {
+      "id": 22,
+      "type": "stat",
+      "title": "Connexions actives",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 17 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 80 }, { "color": "red", "value": 150 }]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "mysql_global_status_threads_connected",
+          "legendFormat": "Connexions",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+
+    {
+      "id": 23,
+      "type": "timeseries",
+      "title": "Requêtes MySQL / seconde",
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 17 },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(mysql_global_status_queries[5m])",
+          "legendFormat": "Queries/s",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(mysql_global_status_slow_queries[5m])",
+          "legendFormat": "Slow queries/s",
+          "refId": "B"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+
+    {
+      "id": 24,
+      "type": "stat",
+      "title": "Taille des données (InnoDB)",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 21 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "mysql_global_status_innodb_data_reads * 16384",
+          "legendFormat": "InnoDB data",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+
+    {
+      "id": 25,
+      "type": "stat",
+      "title": "Erreurs MySQL/s",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 21 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(mysql_global_status_connection_errors_total[5m])",
+          "legendFormat": "Erreurs/s",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+
+    {
+      "id": 30,
+      "type": "row",
+      "title": "MongoDB",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 25 },
+      "collapsed": false
+    },
+
+    {
+      "id": 31,
+      "type": "stat",
+      "title": "MongoDB — Statut",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 26 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "mongodb_up",
+          "legendFormat": "MongoDB",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+
+    {
+      "id": 32,
+      "type": "stat",
+      "title": "Connexions actives",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 26 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 50 }]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "mongodb_connections{state=\"current\"}",
+          "legendFormat": "Connexions",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+
+    {
+      "id": 33,
+      "type": "timeseries",
+      "title": "Opérations MongoDB / seconde",
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 26 },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(mongodb_op_counters_total{type=\"insert\"}[5m])",
+          "legendFormat": "Inserts/s",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(mongodb_op_counters_total{type=\"query\"}[5m])",
+          "legendFormat": "Queries/s",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(mongodb_op_counters_total{type=\"update\"}[5m])",
+          "legendFormat": "Updates/s",
+          "refId": "C"
+        },
+        {
+          "expr": "rate(mongodb_op_counters_total{type=\"delete\"}[5m])",
+          "legendFormat": "Deletes/s",
+          "refId": "D"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+
+    {
+      "id": 34,
+      "type": "stat",
+      "title": "Mémoire MongoDB (resident)",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 30 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "decmbytes",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 512 }]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "mongodb_memory{type=\"resident\"}",
+          "legendFormat": "Resident MB",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    },
+
+    {
+      "id": 35,
+      "type": "stat",
+      "title": "Documents en cache",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 30 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "mongodb_mongod_wiredtiger_cache_bytes{type=\"currently in the cache\"}",
+          "legendFormat": "Cache bytes",
+          "refId": "A"
+        }
+      ],
+      "datasource": "Prometheus"
+    }
+
+  ]
+}

@@ -272,6 +272,88 @@ Duration: ~4s
 
 
 
+##  Monitoring (Prometheus + Grafana)
+
+Le projet intègre un stack de monitoring complet, disponible en production et en développement.
+
+### Services déployés
+
+| Service | Rôle | Port |
+|---------|------|------|
+| **Prometheus** | Collecte et stockage des métriques | `9090` |
+| **Grafana** | Visualisation et dashboards | `3000` |
+| **node_exporter** | Métriques système (CPU, RAM, disque) | interne |
+| **nginx_exporter** | Métriques Nginx (requêtes, connexions) | interne |
+| **mysqld_exporter** | Métriques MySQL (queries, connexions) | interne |
+| **mongodb_exporter** | Métriques MongoDB (ops, mémoire) | interne |
+
+### Accès
+
+```
+Grafana   → http://localhost:3000
+Prometheus → http://localhost:9090
+```
+
+**Identifiants Grafana (production) :**
+- Login : `admin`
+- Mot de passe : `camwater_grafana` (configurable via `GRAFANA_PASSWORD` dans `.env`)
+
+**Identifiants Grafana (dev) :**
+- Login : `admin` / Mot de passe : `admin`
+
+### Démarrer avec le monitoring
+
+```bash
+# Production
+docker compose up -d
+
+# Développement
+docker compose -f docker-compose.dev.yml up -d
+```
+
+Le dashboard **"CamwaterApp — Vue d'ensemble"** est provisionné automatiquement dans Grafana avec :
+- Jauges CPU, mémoire, disque
+- Statut en temps réel de Nginx, MySQL, MongoDB
+- Graphes de requêtes/s pour chaque service
+- Uptime système
+
+### Alertes configurées
+
+Les alertes Prometheus (`docker/prometheus/alerts/app_alerts.yml`) se déclenchent sur :
+- Service hors ligne (Nginx, MySQL, MongoDB)
+- CPU > 80% pendant 5 min
+- Mémoire > 85% pendant 5 min
+- Disque > 85%
+- Taux d'erreurs HTTP 5xx > 0.1/s
+- Connexions MySQL > 80% du max
+
+### Variables d'environnement
+
+```env
+PROMETHEUS_PORT=9090       # Port d'exposition Prometheus
+GRAFANA_PORT=3000          # Port d'exposition Grafana
+GRAFANA_USER=admin         # Utilisateur admin Grafana
+GRAFANA_PASSWORD=...       # Mot de passe admin Grafana
+```
+
+### Structure des fichiers
+
+```
+docker/
+├── prometheus/
+│   ├── prometheus.yml          # Config scraping
+│   └── alerts/
+│       └── app_alerts.yml      # Règles d'alertes
+└── grafana/
+    ├── grafana.ini             # Config Grafana
+    └── provisioning/
+        ├── datasources/
+        │   └── prometheus.yml  # Datasource auto-provisionnée
+        └── dashboards/
+            ├── dashboards.yml  # Config du provider
+            └── camwater_overview.json  # Dashboard principal
+```
+
 ##  Changelog
 
 ### Version 1.0.0 (Mars 2026)

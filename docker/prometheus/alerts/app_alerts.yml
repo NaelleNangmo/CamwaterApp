@@ -1,0 +1,79 @@
+groups:
+  - name: camwater_app
+    rules:
+
+      # ── Disponibilité ──────────────────────────────────────────────────────
+      - alert: NginxDown
+        expr: nginx_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Nginx est hors ligne"
+          description: "Le serveur Nginx ne répond plus depuis plus d'1 minute."
+
+      - alert: MySQLDown
+        expr: mysql_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MySQL est hors ligne"
+          description: "Le serveur MySQL ne répond plus depuis plus d'1 minute."
+
+      - alert: MongoDBDown
+        expr: mongodb_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MongoDB est hors ligne"
+          description: "Le serveur MongoDB ne répond plus depuis plus d'1 minute."
+
+      # ── Ressources système ─────────────────────────────────────────────────
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU élevé sur {{ $labels.instance }}"
+          description: "Utilisation CPU > 80% depuis 5 minutes (valeur: {{ $value | printf \"%.1f\" }}%)."
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Mémoire élevée sur {{ $labels.instance }}"
+          description: "Utilisation mémoire > 85% depuis 5 minutes (valeur: {{ $value | printf \"%.1f\" }}%)."
+
+      - alert: DiskSpaceLow
+        expr: (1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"})) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Espace disque faible sur {{ $labels.instance }}"
+          description: "Disque {{ $labels.mountpoint }} utilisé à {{ $value | printf \"%.1f\" }}%."
+
+      # ── Nginx taux d'erreurs ───────────────────────────────────────────────
+      - alert: HighNginxErrorRate
+        expr: rate(nginx_http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Taux d'erreurs HTTP 5xx élevé"
+          description: "Plus de 0.1 erreurs 5xx/s depuis 2 minutes."
+
+      # ── MySQL connexions ───────────────────────────────────────────────────
+      - alert: MySQLTooManyConnections
+        expr: mysql_global_status_threads_connected / mysql_global_variables_max_connections * 100 > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MySQL : trop de connexions"
+          description: "Plus de 80% des connexions MySQL sont utilisées."
